@@ -1,0 +1,21 @@
+// Apply a natural box layout model to all elements
+// but allowing components to change
+// http://www.paulirish.com/2012/box-sizing-border-box-ftw/
+// @import 'https://fonts.googleapis.com/css?family=Baloo+Paaji';
+@import './webslides.css';
+
+h1 {
+	font-size: 72pt;
+}
+
+body {
+	background-color: #b8b8b8;
+	font-size: 16px;
+}
+
+.chart {
+	min-height:100%; 
+	min-width: 100%;
+	text-align: center;
+	background-color: #ffffff;
+}
