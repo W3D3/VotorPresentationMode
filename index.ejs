@@ -3,14 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width">
-    <title><%= htmlWebpackPlugin.options.title %></title>
-    <link href="https://fonts.googleapis.com/css?family=Baloo+Paaji" rel="stylesheet">
+    <title>GameJam Voting Presentation</title>
+    <link href="https://fonts.googleapis.com/css?family=Overpass" rel="stylesheet">
 </head>
 <body>
         <article id="webslides">
                 <section>
-                    <h1 id="votorTitle">Loading...</h1>
-                    <h2>Voting Results</h2>
+                        <img src="assets/gamejam-logo.png" width="300" />
+                        <hr style="border: 1px solid white"/>
+                        <h1 id="votorTitle"></h1>
+                        <!-- <canvas class="fireworks"></canvas> -->
+                        <!-- <h2>Voting Results</h2> -->
+                    <div id="initialSetup">
+                        <input id="apiURL" placeholder="Votor API Event URL ">
+                        <!-- <input placeholder="Event ID"> -->
+                        <button id="start" style="width: 100%">GO</button>
+                    </div>
+                    
                 </section>
                 <!-- <section class="bg-black aligncenter">
                     <div class="wrap">
@@ -19,8 +28,5 @@
                     </div>
                 </section> -->
             </article>
-    
-        
-    </div><button id="btnNext">NEXT</button>
 </body>
 </html>

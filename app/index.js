@@ -2,49 +2,51 @@
  * Application entry point
  */
 
-// Load application styles
 import 'styles/index.scss';
 import './svg-icons'
 import './webslides'
 import u from 'umbrellajs';
 import Axios from 'axios';
+import anime from 'animejs'
 
-// ================================
-// START YOUR APP HERE
-// ================================
-
-
-var url = "https://votor-produktiv.azurewebsites.net/api/Votor/ac32db46-a1f1-47b1-4564-08d65ef4ba56/cac5b850-ff71-492e-a48d-12dace095df7"
-
-// var response = { "id": "ac32db46-a1f1-47b1-4564-08d65ef4ba56", "userId": "cac5b850-ff71-492e-a48d-12dace095df7", "name": "Game Jam", "description": null, "startDate": "2018-12-11T07:03:40.7502147", "endDate": "2018-12-11T07:09:07.0545748", "public": false, "showOverallWinner": false, "votes": [{ "questionId": "3e40a0f0-7375-4e9c-27ae-08d65ef4be76", "question": "Bestes Game?", "choices": [{ "choiceId": "3608d54e-08a8-49c0-84ec-08d65f368cd9", "choice": "Color Trip", "score": 3.0 }, { "choiceId": "9e4f6beb-abc7-40ba-84ed-08d65f368cd9", "choice": "Battlefront 2", "score": 2.0 }] }] };
+var url;
 
 var votorResponse;
 var ws;
-Axios.get(url).then(function (response) {
-    console.log(response);
-    votorResponse = response.data;
-    u("#votorTitle").html(votorResponse.name);
-
-    votorResponse.votes.forEach(vote => {
-        u('#webslides').append('<section class="bg-black aligncenter"><div class="wrap"><h2>'+
-        vote.question +'</h2><div id="'+ vote.questionId+'" class="chart" style="height:700px; width: 1200px;"></div></div></section>')
-    });
-
-    ws = new WebSlides({
-        autoslide: false,
-        changeOnClick: true,
-        loop: false,
-        minWheelDelta: 40,
-        navigateOnScroll: false,
-        scrollWait: 450,
-        slideOffset: 50,
-        showIndex: false
-    });
-});
-
 
 var echarts = require('echarts');
 
+u("#start").on('click', e => {
+    console.log(u("#apiURL"))
+    url = u("#apiURL").first().value;
+    console.log(url)
+
+    Axios.get(url).then(function (response) {
+        console.log(response);
+        votorResponse = response.data;
+        u("#votorTitle").html(votorResponse.name);
+
+        votorResponse.votes.forEach(vote => {
+            u('#webslides').append('<section class="aligncenter"><div class="wrap"><h1>' +
+                vote.question + '</h1><div id="' + vote.questionId + '" class="chart" style="height:700px; width: 1200px;"></div></div></section>')
+        });
+        u('#webslides').append('<section class="aligncenter winner"><div class="wrap"><h1>Winner</h1></div><canvas class="fireworks"></canvas></section>')
+
+        ws = new WebSlides({
+            autoslide: false,
+            changeOnClick: true,
+            loop: false,
+            minWheelDelta: 40,
+            navigateOnScroll: false,
+            scrollWait: 450,
+            slideOffset: 50,
+            showIndex: false
+        });
+
+        u("#initialSetup").first().remove();
+    });
+
+});
 // initialize echarts instance with prepared DOM
 var myChart;
 // var myChart = echarts.init(document.getElementById('main'));
@@ -55,7 +57,7 @@ var myChart;
 document.getElementById("webslides").addEventListener('ws:slide-change', event => {
     // event.detail.slide contains the instance with all the methods and properties listed
     console.log(event)
-    if(event.detail.currentSlide0 > 0) {
+    if (event.detail.currentSlide0 > 0 && event.detail.currentSlide0 <= votorResponse.votes.length) {
         var vote = votorResponse.votes[event.detail.currentSlide0 - 1]
         var data = [];
         var labels = [];
@@ -63,9 +65,146 @@ document.getElementById("webslides").addEventListener('ws:slide-change', event =
             data.push(choice.score);
             labels.push(choice.choice);
         });
-        
+
         // resetChart(id);
         updateData(vote.questionId, data, labels);
+    } else {
+        console.log("winner?")
+        window.human = false;
+
+        var canvasEl = document.querySelector('.fireworks');
+        var ctx = canvasEl.getContext('2d');
+        var numberOfParticules = 30;
+        var pointerX = 0;
+        var pointerY = 0;
+        var tap = ('ontouchstart' in window || navigator.msMaxTouchPoints) ? 'touchstart' : 'mousedown';
+        var colors = ['#FF1461', '#18FF92', '#5A87FF', '#FBF38C'];
+
+        function setCanvasSize() {
+            canvasEl.width = window.innerWidth * 2;
+            canvasEl.height = window.innerHeight * 2;
+            canvasEl.style.width = window.innerWidth + 'px';
+            canvasEl.style.height = window.innerHeight + 'px';
+            canvasEl.getContext('2d').scale(2, 2);
+        }
+
+        function updateCoords(e) {
+            pointerX = e.clientX || e.touches[0].clientX;
+            pointerY = e.clientY || e.touches[0].clientY;
+        }
+
+        function setParticuleDirection(p) {
+            var angle = anime.random(0, 360) * Math.PI / 180;
+            var value = anime.random(50, 180);
+            var radius = [-1, 1][anime.random(0, 1)] * value;
+            return {
+                x: p.x + radius * Math.cos(angle),
+                y: p.y + radius * Math.sin(angle)
+            }
+        }
+
+        function createParticule(x, y) {
+            var p = {};
+            p.x = x;
+            p.y = y;
+            p.color = colors[anime.random(0, colors.length - 1)];
+            p.radius = anime.random(16, 32);
+            p.endPos = setParticuleDirection(p);
+            p.draw = function () {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, 2 * Math.PI, true);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+            }
+            return p;
+        }
+
+        function createCircle(x, y) {
+            var p = {};
+            p.x = x;
+            p.y = y;
+            p.color = '#FFF';
+            p.radius = 0.1;
+            p.alpha = .5;
+            p.lineWidth = 6;
+            p.draw = function () {
+                ctx.globalAlpha = p.alpha;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, 2 * Math.PI, true);
+                ctx.lineWidth = p.lineWidth;
+                ctx.strokeStyle = p.color;
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+            }
+            return p;
+        }
+
+        function renderParticule(anim) {
+            for (var i = 0; i < anim.animatables.length; i++) {
+                anim.animatables[i].target.draw();
+            }
+        }
+
+        function animateParticules(x, y) {
+            var circle = createCircle(x, y);
+            var particules = [];
+            for (var i = 0; i < numberOfParticules; i++) {
+                particules.push(createParticule(x, y));
+            }
+            anime.timeline().add({
+                targets: particules,
+                x: function (p) { return p.endPos.x; },
+                y: function (p) { return p.endPos.y; },
+                radius: 0.1,
+                duration: anime.random(1200, 1800),
+                easing: 'easeOutExpo',
+                update: renderParticule
+            })
+                .add({
+                    targets: circle,
+                    radius: anime.random(80, 160),
+                    lineWidth: 0,
+                    alpha: {
+                        value: 0,
+                        easing: 'linear',
+                        duration: anime.random(600, 800),
+                    },
+                    duration: anime.random(1200, 1800),
+                    easing: 'easeOutExpo',
+                    update: renderParticule,
+                    offset: 0
+                });
+        }
+
+        var render = anime({
+            duration: Infinity,
+            update: function () {
+                ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+            }
+        });
+
+        document.addEventListener(tap, function (e) {
+            window.human = true;
+            render.play();
+            updateCoords(e);
+            animateParticules(pointerX, pointerY);
+        }, false);
+
+        var centerX = window.innerWidth / 2;
+        var centerY = window.innerHeight / 2;
+
+        function autoClick() {
+            if (window.human) return;
+            animateParticules(
+                anime.random(centerX - 150, centerX + 150),
+                anime.random(centerY - 150, centerY + 150)
+            );
+            anime({ duration: 200 }).finished.then(autoClick);
+        }
+
+        autoClick();
+        setCanvasSize();
+        window.addEventListener('resize', setCanvasSize, false);
     }
     // votorResponse.votes[event]
     // votorResponse.votes.forEach(vote => {
@@ -76,47 +215,13 @@ document.getElementById("webslides").addEventListener('ws:slide-change', event =
     //         data.push(choice.score);
     //         labels.push(choice.choice);
     //     });
-        
+
     //     // resetChart(id);
     //     updateData(vote.questionId, data, labels);
     // });
 
-    
+
 });
-
-// // draw chart
-// myChart.setOption({
-//     title: {
-//         text: 'Best Game',
-//         show: false
-//     },
-//     color: ['rgba(120, 187, 30, 0.8)'],
-//     tooltip: {},
-//     xAxis: {
-//         data: desc,
-//         nameTextStyle: {
-//             color: ['#ff0000', 'rgba(123,123,123,0.5)'],
-//             fontSize: 80
-//         }
-//     },
-//     yAxis: {},
-//     series: [{
-//         name: 'Points',
-//         type: 'bar',
-//         data: loadedData,
-//         animationEasing: 'linear',
-//         animationDuration: function (idx) {
-//             // delay for later data is larger
-//             console.log((loadedData[idx] / maxData) * 5000);
-
-//             return (loadedData[idx] / maxData) * 10000;
-//         },
-//         animationDelay: function (idx) {
-//             // delay for later data is larger
-//             return 0;
-//         }
-//     }]
-// });
 
 function updateData(id, freshData, labels) {
     console.log(id)
@@ -145,23 +250,36 @@ function updateData(id, freshData, labels) {
             type: "category",
             // gridIndex: 3,
             axisLabel: {
-                formatter: function(value, index) {
-                  return value;
+                formatter: function (value, index) {
+                    return value;
                 },
                 textStyle: {
-                  color: '#000',
-                  fontSize: 45,
+                    color: '#000',
+                    fontSize: 45,
                 },
                 rotate: 90,
                 margin: 15,
                 inside: true,
                 verticalAlign: "center",
-                fontFamily: 'Baloo Paaji',
+                fontFamily: 'Overpass',
                 // align: "center",
-              },
-              z: 5
+            },
+            z: 5
         },
-        yAxis: {},
+        yAxis: {
+            axisLabel: {
+                textStyle: {
+                    color: '#000',
+                    fontSize: 24,
+                },
+                margin: 15,
+                inside: false,
+                verticalAlign: "center",
+                fontFamily: 'Overpass',
+                // align: "center",
+            },
+            interval: 1
+        },
         series: [{
             name: 'Points',
             type: 'bar',
@@ -169,8 +287,7 @@ function updateData(id, freshData, labels) {
             scale: true,
             animationEasing: 'linear',
             animationDuration: function (idx) {
-                console.log(freshData[idx] + " -> " + (freshData[idx] / maxData) * 20000);
-                return (freshData[idx] / maxData) * 20000;
+                return (freshData[idx] / maxData) * 10000;
             },
             animationDelay: function (idx) {
                 // delay for later data is larger
@@ -189,3 +306,117 @@ function resetChart(id) {
     // myChart = echarts.init(document.getElementById(id));
 }
 
+
+// /* fallas 2k63 */
+// window.human = false;
+// function autoClick() {
+//   if (window.human) return;
+//   animateParticules(
+//     anime.random(centerX-250, centerX+250), 
+//     anime.random(centerY-150, centerY+150)
+//   );
+//   anime({duration: 500}).finished.then(autoClick);
+// }
+// autoClick();
+
+// var canvasEl = document.querySelector('.fireworks');
+// var ctx = canvasEl.getContext('2d');
+// var numberOfParticules = Number(location.href.split('?')[1]) || 190;
+// var pointerX = 0;
+// var pointerY = 0;
+// var tap = ('ontouchstart' in window || navigator.msMaxTouchPoints) ? 'touchstart' : 'mousedown';
+// var colors = ['#3C1518', '#69140E', '#A44200', '#D58936', '#FFF94F'];
+
+// function setCanvasSize() {
+//   canvasEl.width = window.innerWidth * 2;
+//   canvasEl.height = window.innerHeight * 2;
+//   canvasEl.style.width = window.innerWidth + 'px';
+//   canvasEl.style.height = window.innerHeight + 'px';
+//   canvasEl.getContext('2d').scale(2, 2);
+// }
+
+// function updateCoords(e) {
+//   pointerX = e.clientX || e.touches[0].clientX;
+//   pointerY = e.clientY || e.touches[0].clientY;
+// }
+
+// function setParticuleDirection(p) {
+//   var angle = anime.random(0, -180) * Math.PI / 100;
+//   var value = anime.random(0, 250);
+//   var radius = [-1, 1][anime.random(0, 1)] * value;
+//   return {
+//     x: p.x + radius * Math.cos(angle),
+//     y: p.y + radius * Math.sin(angle)
+//   }
+// }
+
+// function createParticule(x,y) {
+//   var p = {};
+//   p.x = x;
+//   p.y = y;
+//   p.color = colors[anime.random(0, colors.length - 1)];
+//   p.radius = anime.random(0, 10);
+//   p.endPos = setParticuleDirection(p);
+//   p.draw = function() {
+//     ctx.beginPath();
+//     ctx.arc(p.x, p.y, p.radius, 0, 2 * Math.PI, true);
+//     ctx.fillStyle = p.color;
+//     ctx.fill();
+//   }
+//   return p;
+// }
+
+// function renderParticule(anim) {
+//   for (var i = 0; i < anim.animatables.length; i++) {
+//     anim.animatables[i].target.draw();
+//   }
+// }
+
+// function animateParticules(x, y) {
+//   var particules = [];
+//   for (var i = 0; i < numberOfParticules; i++) {
+//     particules.push(createParticule(x, y));
+//   }
+//   anime.timeline().add({
+//     targets: particules,
+//     x: function(p) { return p.endPos.x; },
+//     y: function(p) { return p.endPos.y; },
+//     radius: 0.1,
+//     duration: anime.random(1200, 1000),
+//     easing: 'easeOutExpo',
+//     update: renderParticule
+//   })
+//     .add({
+//     lineWidth: 0,
+//     alpha: {
+//       value: 0,
+//       easing: 'linear',
+//       duration: anime.random(600, 800),  
+//     },
+//     duration: anime.random(200, 100),
+//     easing: 'easeOutExpo',
+//     update: renderParticule,
+//     offset: 0
+//   });
+// }
+
+// var render = anime({
+//   duration: Infinity,
+//   update: function() {
+//     ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+//   }
+// });
+
+// document.addEventListener(tap, function(e) {
+//   window.human = true;
+//   render.play();
+//   updateCoords(e);
+//   animateParticules(pointerX, pointerY);
+// }, false);
+
+
+// var centerX = window.innerWidth / 2;
+// var centerY = window.innerHeight / 2;
+
+// setCanvasSize();
+// window.addEventListener('resize', setCanvasSize, false);
