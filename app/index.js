@@ -8,13 +8,11 @@ import './webslides'
 import u from 'umbrellajs';
 import Axios from 'axios';
 import anime from 'animejs'
-
+import echarts from 'echarts'
 var url;
-
 var votorResponse;
 var ws;
-
-var echarts = require('echarts');
+// var echarts = require('echarts');
 
 u("#start").on('click', e => {
     console.log(u("#apiURL"))
@@ -27,16 +25,17 @@ u("#start").on('click', e => {
         u("#votorTitle").html(votorResponse.name);
 
         votorResponse.votes.forEach(vote => {
-            u('#webslides').append('<section class="aligncenter"><div class="wrap"><h1>' +
-                vote.question + '</h1><div id="' + vote.questionId + '" class="chart" style="height:700px; width: 1200px;"></div></div></section>')
+            u('#webslides').append('<section class="aligncenter nopad"><div class="wrap"><h1>' +
+                vote.question + '</h1><div id="' + vote.questionId + '" class="chart" style="height:800px; width: 1200px;"></div></div></section>')
         });
-        u('#webslides').append('<section class="aligncenter winner"><div class="wrap"><h1>Winner</h1></div><canvas class="fireworks"></canvas></section>')
+        votorResponse.votes.forEach(vote => {
+            u('#webslides').append('<section class="aligncenter winner"><div class="wrap"><h2>Winner of '+ vote.question +'</h2><h1>WinnerName</h1></div><canvas class="fireworks"></canvas></section>')
+        });
 
         ws = new WebSlides({
             autoslide: false,
-            changeOnClick: true,
+            changeOnClick: false,
             loop: false,
-            minWheelDelta: 40,
             navigateOnScroll: false,
             scrollWait: 450,
             slideOffset: 50,
@@ -44,31 +43,7 @@ u("#start").on('click', e => {
         });
 
         u("#initialSetup").first().remove();
-    });
 
-});
-// initialize echarts instance with prepared DOM
-var myChart;
-// var myChart = echarts.init(document.getElementById('main'));
-// var desc = ["Color Trip", "aaaa", "bbbb", "ccc", "ddd", "f", "g"]
-// var loadedData = [60, 55, 30, 45, 5, 30, 10]
-// var maxData = Math.max.apply(Math, loadedData);
-
-document.getElementById("webslides").addEventListener('ws:slide-change', event => {
-    // event.detail.slide contains the instance with all the methods and properties listed
-    console.log(event)
-    if (event.detail.currentSlide0 > 0 && event.detail.currentSlide0 <= votorResponse.votes.length) {
-        var vote = votorResponse.votes[event.detail.currentSlide0 - 1]
-        var data = [];
-        var labels = [];
-        vote.choices.forEach(choice => {
-            data.push(choice.score);
-            labels.push(choice.choice);
-        });
-
-        // resetChart(id);
-        updateData(vote.questionId, data, labels);
-    } else {
         console.log("winner?")
         window.human = false;
 
@@ -78,7 +53,7 @@ document.getElementById("webslides").addEventListener('ws:slide-change', event =
         var pointerX = 0;
         var pointerY = 0;
         var tap = ('ontouchstart' in window || navigator.msMaxTouchPoints) ? 'touchstart' : 'mousedown';
-        var colors = ['#FF1461', '#18FF92', '#5A87FF', '#FBF38C'];
+        var colors = ['#FF1461', '#18FF92', '#216ae3', 'rgb(248, 245, 197)'];
 
         function setCanvasSize() {
             canvasEl.width = window.innerWidth * 2;
@@ -156,7 +131,7 @@ document.getElementById("webslides").addEventListener('ws:slide-change', event =
                 x: function (p) { return p.endPos.x; },
                 y: function (p) { return p.endPos.y; },
                 radius: 0.1,
-                duration: anime.random(1200, 1800),
+                duration: anime.random(1500, 2000),
                 easing: 'easeOutExpo',
                 update: renderParticule
             })
@@ -169,7 +144,7 @@ document.getElementById("webslides").addEventListener('ws:slide-change', event =
                         easing: 'linear',
                         duration: anime.random(600, 800),
                     },
-                    duration: anime.random(1200, 1800),
+                    duration: anime.random(1500, 2000),
                     easing: 'easeOutExpo',
                     update: renderParticule,
                     offset: 0
@@ -183,12 +158,12 @@ document.getElementById("webslides").addEventListener('ws:slide-change', event =
             }
         });
 
-        document.addEventListener(tap, function (e) {
-            window.human = true;
-            render.play();
-            updateCoords(e);
-            animateParticules(pointerX, pointerY);
-        }, false);
+        // document.addEventListener(tap, function (e) {
+        //     window.human = true;
+        //     render.play();
+        //     updateCoords(e);
+        //     animateParticules(pointerX, pointerY);
+        // }, false);
 
         var centerX = window.innerWidth / 2;
         var centerY = window.innerHeight / 2;
@@ -196,15 +171,41 @@ document.getElementById("webslides").addEventListener('ws:slide-change', event =
         function autoClick() {
             if (window.human) return;
             animateParticules(
-                anime.random(centerX - 150, centerX + 150),
-                anime.random(centerY - 150, centerY + 150)
+                anime.random(centerX - 200, centerX + 200),
+                anime.random(centerY - 200, centerY + 200)
             );
-            anime({ duration: 200 }).finished.then(autoClick);
+            anime({ duration: 800 }).finished.then(autoClick);
         }
 
         autoClick();
         setCanvasSize();
         window.addEventListener('resize', setCanvasSize, false);
+    });
+
+});
+// initialize echarts instance with prepared DOM
+var myChart;
+// var myChart = echarts.init(document.getElementById('main'));
+// var desc = ["Color Trip", "aaaa", "bbbb", "ccc", "ddd", "f", "g"]
+// var loadedData = [60, 55, 30, 45, 5, 30, 10]
+// var maxData = Math.max.apply(Math, loadedData);
+
+document.getElementById("webslides").addEventListener('ws:slide-change', event => {
+    // event.detail.slide contains the instance with all the methods and properties listed
+    console.log(event)
+    if (event.detail.currentSlide0 > 0 && event.detail.currentSlide0 <= votorResponse.votes.length) {
+        var vote = votorResponse.votes[event.detail.currentSlide0 - 1]
+        var data = [];
+        var labels = [];
+        vote.choices.forEach(choice => {
+            data.push(choice.score);
+            labels.push(choice.choice);
+        });
+
+        // resetChart(id);
+        updateData(vote.questionId, data, labels);
+    } else if (event.detail.currentSlide == event.detail.slides){
+        
     }
     // votorResponse.votes[event]
     // votorResponse.votes.forEach(vote => {

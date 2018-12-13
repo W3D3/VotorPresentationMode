@@ -5,7 +5,7 @@
 @import './webslides.css';
 
 h1 {
-	font-size: 72pt;
+	font-size: 65pt;
 	margin-bottom: 20px;
 	margin-top: 20px;
 }
@@ -19,6 +19,16 @@ body {
 	font-size: 16px;
 }
 
+p, span {
+	font-size: 24pt;
+	color: white;
+} 
+a {
+	color: rgb(143, 201, 255);
+	
+
+}
+
 .chart {
 	min-height:100%; 
 	min-width: 100%;
@@ -27,7 +37,9 @@ body {
 	border-radius: 50px
 }
 
-
+.slide.nopad {
+	padding: 0;
+}
 canvas {
 	display: inline-block;
   vertical-align: baseline;
@@ -38,4 +50,19 @@ canvas {
   right: 0;
   bottom: 0;
   left: 0;
+}
+
+#navigation {
+	display: none;
+}
+// wow {
+// 	color: #FF1461; color: #18FF92; color: #216ae3'; 'rgb(248, 245, 197)'];
+// }
+
+.footer {
+	position: absolute; 
+	bottom: 10px;
+	font-family: monospace;
+	font-size: 12pt;
+	line-height: 1em;
 }
