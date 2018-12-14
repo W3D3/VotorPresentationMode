@@ -23,14 +23,27 @@ u("#start").on('click', e => {
         console.log(response);
         votorResponse = response.data;
         u("#votorTitle").html(votorResponse.name);
-
+        votorResponse.votes.reverse()
         votorResponse.votes.forEach(vote => {
             u('#webslides').append('<section class="aligncenter nopad"><div class="wrap"><h1>' +
                 vote.question + '</h1><div id="' + vote.questionId + '" class="chart" style="height:800px; width: 1200px;"></div></div></section>')
         });
-        votorResponse.votes.forEach(vote => {
-            u('#webslides').append('<section class="aligncenter winner"><div class="wrap"><h2>Winner of '+ vote.question +'</h2><h1>WinnerName</h1></div><canvas class="fireworks"></canvas></section>')
+
+        var winnerVote = votorResponse.votes[votorResponse.votes.length-1]
+        
+        var maxScore = 0;
+        var winners = []
+        winnerVote.choices.forEach(choice => {
+            if (choice.score > maxScore) maxScore = choice.score;
         });
+        winnerVote.choices.forEach(choice => {
+            if (choice.score == maxScore) winnerName += winners.push(choice.choice);
+        });
+        var winnerName = winners.join(' & ')
+
+
+        u('#webslides').append('<section class="aligncenter winner"><div class="wrap"><h2>Winner of '+ winnerVote.question +'</h2><h1>'+winnerName+'</h1></div><canvas class="fireworks"></canvas></section>')
+        
 
         ws = new WebSlides({
             autoslide: false,
