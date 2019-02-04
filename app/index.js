@@ -1,5 +1,10 @@
 /**
- * Application entry point
+ * DSICLAIMER:
+ * This application is fucking terrible
+ * only look at the code if you wanna know how not to do stuff
+ * it works though and that's the sprit right?
+ * 
+ * (c) 2018 Christoph Wedenig
  */
 
 import 'styles/index.scss';
@@ -12,7 +17,6 @@ import echarts from 'echarts'
 var url;
 var votorResponse;
 var ws;
-// var echarts = require('echarts');
 
 u("#start").on('click', e => {
     console.log(u("#apiURL"))
